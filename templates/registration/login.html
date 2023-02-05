@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+    <form action="" method="post" class="form">
+        {% csrf_token %}
+
+        {% bootstrap_form form form_group_class="form-outline mb-4"%}
+
+        {% bootstrap_button button_type="submit" content="OK" %}
+        {% bootstrap_button button_type="reset" content="Cancel" %}
+    </form>
+{% endblock %}

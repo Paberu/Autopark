@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Управление машинами на предприятии{% endblock %}
+
+{% block content %}
+    <p><a class="btn btn-primary" href="/park/create_vehicle" role="button">Создать транспортное средство</a></p>
+    {% for vehicle in vehicles %}
+        <p><a href="{{ vehicle.get_absolute_url }}">{{ vehicle }}</a></p>
+    {% endfor %}
+
+    {% block pagination %}
+        {% if vehicles.has_other_pages %}
+            <ul class="pagination">
+                {% if vehicles.has_previous %}
+                    <li><a class="btn btn-primary" href="{{ request.path }}?query={{ query }}&amp;page={{ vehicles.previous_page_number }}" role="button">Назад</a></li>
+                {% endif %}
+
+                <li class="current">{{ vehicles.number }}</li>
+
+                {% if vehicles.has_next %}
+                    <li><a class="btn btn-primary" href="{{ request.path }}?query={{ query }}&amp;page={{ vehicles.next_page_number }}" role="button">Вперёд</a></li>
+                {% endif %}
+            </ul>
+        {% endif %}
+    {% endblock %}
+{% endblock %}

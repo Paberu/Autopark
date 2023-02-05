@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %}Предприятия{% endblock %}
+
+{% block content %}
+    {% for enterprise in enterprises %}
+        <p><a href="{{ enterprise.get_absolute_url }}">{{ enterprise }}</a></p>
+    {% endfor %}
+
+{% endblock %}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+{% load django_bootstrap5 %}
+{% load i18n %}
+{% load tz %}
+{% get_current_language as LANGUAGE_CODE %}
+{% localtime on %}
+    {% get_current_timezone as TIME_ZONE %}
+{% endlocaltime %}
+<html lang="{{ LANGUAGE_CODE|default:'en_us' }}">
+
+<head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    {% load static %}
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+    <script type="module" src="{% static 'js.cookie.mjs' %}"></script>
+    <script type="module">
+      import Cookies from '{% static 'js.cookie.mjs' %}'
+
+      Cookies.set('django_timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    </script>
+
+    <!-- Page title -->
+    <title>{% block bootstrap5_title %}{% block title %}{% endblock %}{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    {% bootstrap_css %}
+
+    <!-- Bootstrap JavaScript if it is in head -->
+    {% if 'javascript_in_head'|bootstrap_setting %}
+        {% bootstrap_javascript %}
+    {% endif %}
+
+    {% block bootstrap5_extra_head %}{% endblock %}
+
+</head>
+
+<body>
+{% block bootstrap5_before_content %} {{ context }} {% endblock %}
+{% block bootstrap5_content %} CONTENT {% endblock %}
+{% block bootstrap5_after_content %}{% endblock %}
+
+<!-- Bootstrap JavaScript if it is in body -->
+{% if not 'javascript_in_head'|bootstrap_setting %}
+    {% bootstrap_javascript %}
+{% endif %}
+
+{% block bootstrap5_extra_script %}{% endblock %}
+
+</body>
+
+</html>
+
+
+
