@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from park.models import Vehicle, Manufacturer, Model, Enterprise, Driver, Manager
+from park.models import Vehicle, Manufacturer, Model, Enterprise, Driver, Manager, RoutePoint
 
 admin.site.register(Manufacturer)
 admin.site.register(Manager)
@@ -83,5 +83,12 @@ class VehicleAdmin(admin.ModelAdmin):
 @admin.register(Model)
 class ModelAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'body_type', 'power', 'passengers', 'fuel_tank')
+    actions_on_bottom = True
+    actions_on_top = False
+
+
+@admin.register(RoutePoint)
+class RoutePointAdmin(admin.ModelAdmin):
+    list_display = ('id', 'vehicle', 'point', 'datetime')
     actions_on_bottom = True
     actions_on_top = False

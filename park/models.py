@@ -7,6 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import now
 
+from django.contrib.gis.db import models as geo_models
+
 
 class Manufacturer(models.Model):
     title = models.CharField(max_length=70, help_text='Название производителя', unique=True,
@@ -145,4 +147,24 @@ class Manager(models.Model):
         verbose_name_plural = 'Менеджеры'
 
     def __str__(self):
-        return self.user.username
+        return self.user.username,
+
+
+class RoutePoint(geo_models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, null=False, blank=False,
+                                related_name='routepoints', verbose_name='Транспортное средство')
+    point = geo_models.PointField(verbose_name='Точка на карте')
+    datetime = models.DateTimeField(verbose_name='Время прохождения точки маршрута')
+
+    class Meta:
+        ordering = ['vehicle']
+        verbose_name = 'Точка маршрута'
+        verbose_name_plural = 'Точки маршрута'
+
+    def __str__(self):
+        return str(self.vehicle_id) + '' + str(self.point)
+
+    def display_vehicle(self):
+        return self.vehicle.name
+
+

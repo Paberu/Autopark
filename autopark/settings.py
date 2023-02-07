@@ -82,7 +82,8 @@ DATABASES = {
     #     'NAME': BASE_DIR / 'db.sqlite3',
     # }
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        # 'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.contrib.gis.db.backends.mysql',
         'OPTIONS': {
             'read_default_file': BASE_DIR / 'autopark/my.cnf'
         }
@@ -133,3 +134,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/park/management'
 LOGOUT_REDIRECT_URL = '/'
+
+import os
+OSGEO4W = r'C:\OSGeo4W'
+os.environ['OSGEO4W_ROOT'] = OSGEO4W
+os.environ['PROJ_LIB'] = OSGEO4W + r'\share\proj'
+GDAL_LIBRARY_PATH = r'C:\OSGeo4W\bin\gdal305'
+GEOS_LIBRARY_PATH = r'C:\OSGeo4W\bin\geos_c'
+os.environ['PATH'] = OSGEO4W + r'\bin;' + os.environ['PATH']
