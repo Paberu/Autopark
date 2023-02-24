@@ -139,7 +139,7 @@ class Driver(models.Model):
 
 class Manager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    enterprise = models.ManyToManyField(Enterprise, null=True, blank=True)
+    enterprise = models.ManyToManyField(Enterprise, blank=True)
 
     class Meta:
         ordering = ['user']
@@ -147,7 +147,7 @@ class Manager(models.Model):
         verbose_name_plural = 'Менеджеры'
 
     def __str__(self):
-        return self.user.username,
+        return self.user.username
 
 
 class RoutePoint(geo_models.Model):
@@ -166,5 +166,3 @@ class RoutePoint(geo_models.Model):
 
     def display_vehicle(self):
         return self.vehicle.name
-
-

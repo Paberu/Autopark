@@ -6,6 +6,7 @@ from park import views
 
 urlpatterns = [
     path('api/vehicles/', views.VehicleInfoView.as_view()),
+    path('api/routepoints/', views.RoutePointsInfoView.as_view()),
     path('api/get_token', obtain_auth_token),
     path('management', views.management, name='management'),
     # path('enterprise', views.enterprise, name='enterprise'),

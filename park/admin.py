@@ -6,6 +6,14 @@ admin.site.register(Manufacturer)
 admin.site.register(Manager)
 
 
+# В каждой функции проверяется, не Manager ли в админке, не надо ли отфильтровать по Enterprise'ам.
+# Вынес в отдельную функцию после того, как пришлось везде filter на get менять.
+def get_manager_enterprises(request):
+    if Manager.objects.filter(user=request.user):
+        mngr = Manager.objects.get(user=request.user)
+        return mngr.enterprise.all()
+
+
 @admin.register(Enterprise)
 class EnterpriseAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'city', 'country', 'timezone')
@@ -14,11 +22,9 @@ class EnterpriseAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if Manager.objects.filter(user=request.user):
-            mngr = Manager.objects.filter(user=request.user)[0]
-            enterprises = mngr.enterprise.all()
+        enterprises = get_manager_enterprises(request)
+        if enterprises:
             return qs.filter(id__in=enterprises)
-        # if request.user.is_superuser:
         return qs
 
 
@@ -30,17 +36,15 @@ class DriverAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if Manager.objects.filter(user=request.user):
-            mngr = Manager.objects.filter(user=request.user)[0]
-            enterprises = mngr.enterprise.all()
+        enterprises = get_manager_enterprises(request)
+        if enterprises:
             return qs.filter(enterprise__in=enterprises)
         # if request.user.is_superuser:
         return qs
 
     def get_field_queryset(self, db, db_field, request):
-        if Manager.objects.filter(user=request.user):
-            mngr = Manager.objects.filter(user=request.user)[0]
-            enterprises = mngr.enterprise.all()
+        enterprises = get_manager_enterprises(request)
+        if enterprises:
             if db_field.name == 'enterprise':
                 return Enterprise.objects.filter(id__in=enterprises)
             if db_field.name == 'car' and Manager.objects.filter(user=request.user):
@@ -62,17 +66,15 @@ class VehicleAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if Manager.objects.filter(user=request.user):
-            mngr = Manager.objects.filter(user=request.user)[0]
-            enterprises = mngr.enterprise.all()
+        enterprises = get_manager_enterprises(request)
+        if enterprises:
             return qs.filter(enterprise__in=enterprises)
         # if request.user.is_superuser:
         return qs
 
     def get_field_queryset(self, db, db_field, request):
-        if Manager.objects.filter(user=request.user):
-            mngr = Manager.objects.filter(user=request.user)[0]
-            enterprises = mngr.enterprise.all()
+        enterprises = get_manager_enterprises(request)
+        if enterprises:
             if db_field.name == 'enterprise':
                 return Enterprise.objects.filter(id__in=enterprises)
             if db_field.name == 'active_driver' and Manager.objects.filter(user=request.user):

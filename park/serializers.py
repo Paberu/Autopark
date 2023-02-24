@@ -2,9 +2,10 @@ import datetime
 
 import pytz
 from rest_framework import serializers
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from autopark import settings
-from park.models import Vehicle, Manufacturer, Model, Enterprise
+from park.models import Vehicle, Manufacturer, Model, Enterprise, RoutePoint
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):
@@ -76,3 +77,45 @@ class VehicleSerializer(serializers.ModelSerializer):
             data['buy_datetime'] = data['buy_datetime'].astimezone(local_tz)
         return data
 
+
+class RoutePointSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RoutePoint
+        fields = ['point', 'datetime']
+
+    def to_representation(self, instance):
+        ent_tz = pytz.timezone(instance.vehicle.enterprise.timezone)
+        point_datetime = instance.datetime.astimezone(ent_tz)
+        ret = super().to_representation(instance)
+        ret['datetime'] = str(point_datetime)
+        return ret
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        local_tz = settings.TIME_ZONE
+        if data['datetime']:
+            data['datetime'] = data['datetime'].astimezone(local_tz)
+        return data
+
+
+class GeoRoutePointSerializer(GeoFeatureModelSerializer):
+
+    class Meta:
+        model = RoutePoint
+        geo_field = 'point'
+        fields = ['datetime',]
+
+    def to_representation(self, instance):
+        ent_tz = pytz.timezone(instance.vehicle.enterprise.timezone)
+        point_datetime = instance.datetime.astimezone(ent_tz)
+        ret = super().to_representation(instance)
+        ret['datetime'] = str(point_datetime)
+        return ret
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        local_tz = settings.TIME_ZONE
+        if data['datetime']:
+            data['datetime'] = data['datetime'].astimezone(local_tz)
+        return data

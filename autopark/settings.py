@@ -1,14 +1,16 @@
 from pathlib import Path
 
 import pymysql
-
+import environ
 
 pymysql.install_as_MySQLdb()
 
+env = environ.Env()
+environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-2xr)5s9oc4o7xsq-13-xsz858(bvh^&esooru)j3ow4jseer#y'
+SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = True
 
@@ -23,13 +25,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'rest_framework',
+    'rest_framework_gis',
     'rest_framework.authtoken',
     'django_bootstrap5',
     'widget_tweaks',
     'tz_detect',
     'park.apps.ParkConfig'
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -73,7 +75,6 @@ REST_FRAMEWORK = {
     )
 }
 
-
 WSGI_APPLICATION = 'autopark.wsgi.application'
 
 DATABASES = {
@@ -82,14 +83,15 @@ DATABASES = {
     #     'NAME': BASE_DIR / 'db.sqlite3',
     # }
     'default': {
-        # 'ENGINE': 'django.db.backends.mysql',
         'ENGINE': 'django.contrib.gis.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': BASE_DIR / 'autopark/my.cnf'
-        }
+        'NAME': env('DATABASE_NAME'),
+        'USER': env('DATABASE_USER'),
+        'PASSWORD': env('DATABASE_PASSWORD'),
+        # 'OPTIONS': {
+        #     'read_default_file': BASE_DIR / 'my.cnf',
+        # }
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -109,7 +111,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -120,7 +121,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -134,11 +134,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/park/management'
 LOGOUT_REDIRECT_URL = '/'
-
-import os
-OSGEO4W = r'C:\OSGeo4W'
-os.environ['OSGEO4W_ROOT'] = OSGEO4W
-os.environ['PROJ_LIB'] = OSGEO4W + r'\share\proj'
-GDAL_LIBRARY_PATH = r'C:\OSGeo4W\bin\gdal305'
-GEOS_LIBRARY_PATH = r'C:\OSGeo4W\bin\geos_c'
-os.environ['PATH'] = OSGEO4W + r'\bin;' + os.environ['PATH']

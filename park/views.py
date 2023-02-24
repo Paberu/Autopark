@@ -1,6 +1,9 @@
 import pytz
+from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.core.serializers import serialize
+from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -13,9 +16,9 @@ from rest_framework.views import APIView
 
 from autopark import settings
 from .forms import VehicleForm
-from .models import Vehicle, Manager, Enterprise, Driver
+from .models import Vehicle, Manager, Enterprise, Driver, RoutePoint
 from .permissions import IsManagerPermission
-from .serializers import VehicleSerializer
+from .serializers import VehicleSerializer, RoutePointSerializer, GeoRoutePointSerializer
 
 
 class VehicleInfoView(APIView):
@@ -42,14 +45,7 @@ class VehicleInfoView(APIView):
         else:
             print('Error in server logic, should have failed on "check_permissions" stage.')
             self.permission_denied(request, message='Error code: 401', code=401)
-        print(vehicles)
-        # for car in vehicles:
-        #     print(car)
-        #     print(car.buy_datetime)
-        #     print(car.enterprise.timezone)
-        #     ent_tz = pytz.timezone(car.enterprise.timezone)
-        #     car.buy_datetime = car.buy_datetime.astimezone(ent_tz)
-        #     print(car.buy_datetime)
+
         page = request.GET.get('page', 1)
         paginator = Paginator(vehicles, 20)
         try:
@@ -222,3 +218,55 @@ def set_timezone(request):
         request.session['django_timezone'] = request.COOKIES['django_timezone']
     else:
         return render(request, 'timezone.html', {'timezones': tuple(zip(pytz.common_timezones, pytz.common_timezones))})
+
+
+class RoutePointsInfoView(APIView):
+    permission_classes = (IsManagerPermission,)
+    parser_classes = (JSONParser, )
+
+    # def check_permissions(self, request):
+    #     for permission in self.get_permissions():
+    #         if not permission.has_permission(request, self):
+    #             self.permission_denied(request, message='Error code: 401', code=401)
+    #
+    # def check_object_permissions(self, request, obj):
+    #     for permission in self.get_permissions():
+    #         if not permission.has_object_permission(request, self, obj):
+    #             self.permission_denied(request, message='Error code: 403', code=403)
+
+
+    def get(self, request):
+        vehicle = get_object_or_404(Vehicle, pk=request.GET['id'])
+        ent_tz = pytz.timezone(vehicle.enterprise.timezone)
+        start_date = datetime.fromisoformat(request.GET['start'])
+        end_date = datetime.fromisoformat(request.GET['end'])
+        geojs = request.GET.get('geojson', False)
+
+        if request.user.is_superuser or Manager.objects.filter(user=request.user):
+            route_points = RoutePoint.objects.filter(
+                Q(vehicle=vehicle) &
+                Q(datetime__gt=start_date) &
+                Q(datetime__lt=end_date)
+            )
+        else:
+            print('Error in server logic, should have failed on "check_permissions" stage.')
+            self.permission_denied(request, message='Error code: 401', code=401)
+
+        # page = request.GET.get('page', 1)
+        # paginator = Paginator(route_points, 20)
+        # try:
+        #     route_points = paginator.page(page)
+        # except PageNotAnInteger:
+        #     route_points = paginator.page(1)
+        # except EmptyPage:
+        #     route_points = paginator.page(paginator.num_pages)
+
+        if not geojs:
+            serialized_route_points = RoutePointSerializer(instance=route_points, many=True)
+            # serialized_route_points = serialize('json', route_points,  fields=('point', 'datetime'))
+        else:
+            # serialized_route_points = serialize('geojson', route_points, geometry_field='point',
+            #                                     fields=('point', 'datetime'))
+            serialized_route_points = GeoRoutePointSerializer(instance=route_points, many=True)
+
+        return Response(serialized_route_points.data)
