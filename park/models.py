@@ -166,3 +166,10 @@ class RoutePoint(geo_models.Model):
 
     def display_vehicle(self):
         return self.vehicle.name
+
+
+class Travel(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.DO_NOTHING, null=False, blank=False, related_name='travels',
+                                verbose_name='Автомобиль, на котором произошла поездка')
+    begin = models.DateTimeField(verbose_name='Начало поездки')
+    end = models.DateTimeField(verbose_name='Окончание поездки')
