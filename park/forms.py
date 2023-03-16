@@ -9,3 +9,10 @@ class VehicleForm(forms.ModelForm):
         model = Vehicle
         fields = ['manufacturer', 'model', 'cost', 'odometer', 'year', 'color', 'number_plate',
                   'enterprise', 'active_driver', 'buy_datetime']
+
+
+class EnterpriseForm(forms.Form):
+    companies = forms.ChoiceField()
+    vehicles = forms.ChoiceField()
+    travels = forms.ChoiceField()
+    # route_points = forms.ChoiceField()

@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from autopark import settings
-from park.models import Vehicle, Manufacturer, Model, Enterprise, RoutePoint
+from park.models import Vehicle, Manufacturer, Model, Enterprise, RoutePoint, Travel
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):
@@ -118,4 +118,29 @@ class GeoRoutePointSerializer(GeoFeatureModelSerializer):
         local_tz = settings.TIME_ZONE
         if data['datetime']:
             data['datetime'] = data['datetime'].astimezone(local_tz)
+        return data
+
+
+class TravelSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Travel
+        fields = ['vehicle', 'begin', 'end']
+
+    def to_representation(self, instance):
+        ent_tz = pytz.timezone(instance.vehicle.enterprise.timezone)
+        travel_begin = instance.begin.astimezone(ent_tz)
+        travel_end = instance.end.astimezone(ent_tz)
+        ret = super().to_representation(instance)
+        ret['begin'] = str(travel_begin)
+        ret['end'] = str(travel_end)
+        return ret
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        local_tz = settings.TIME_ZONE
+        if data['begin']:
+            data['begin'] = data['begin'].astimezone(local_tz)
+        if data['end']:
+            data['end'] = data['end'].astimezone(local_tz)
         return data

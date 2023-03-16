@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.contrib.gis.admin import OSMGeoAdmin
 
-from park.models import Vehicle, Manufacturer, Model, Enterprise, Driver, Manager, RoutePoint
+from park.models import Vehicle, Manufacturer, Model, Enterprise, Driver, Manager, RoutePoint, Travel
 
 admin.site.register(Manufacturer)
 admin.site.register(Manager)
@@ -90,7 +91,14 @@ class ModelAdmin(admin.ModelAdmin):
 
 
 @admin.register(RoutePoint)
-class RoutePointAdmin(admin.ModelAdmin):
+class RoutePointAdmin(OSMGeoAdmin):
     list_display = ('id', 'vehicle', 'point', 'datetime')
+    actions_on_bottom = True
+    actions_on_top = False
+
+
+@admin.register(Travel)
+class TravelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'vehicle', 'begin', 'end')
     actions_on_bottom = True
     actions_on_top = False

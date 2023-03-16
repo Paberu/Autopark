@@ -1,9 +1,10 @@
 import pytz
+import geocoder
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.serializers import serialize
-from django.db.models import Q
+from django.db.models import Q, F, Min, Max
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -13,12 +14,13 @@ from rest_framework.parsers import JSONParser
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
+# from rest_framework_drilldown import DrillDownAPIView
 
 from autopark import settings
-from .forms import VehicleForm
-from .models import Vehicle, Manager, Enterprise, Driver, RoutePoint
+from .forms import VehicleForm, EnterpriseForm
+from .models import Vehicle, Manager, Enterprise, Driver, RoutePoint, Travel
 from .permissions import IsManagerPermission
-from .serializers import VehicleSerializer, RoutePointSerializer, GeoRoutePointSerializer
+from .serializers import VehicleSerializer, RoutePointSerializer, GeoRoutePointSerializer, TravelSerializer
 
 
 class VehicleInfoView(APIView):
@@ -147,13 +149,14 @@ def vehicle(request, id):
         vehicle_values['active_driver'] = vehicle.active_driver
         vehicle_values['buy_datetime'] = vehicle.buy_datetime
 
-        # print(vehicle.buy_datetime)
+        # print(vehicle_values)
         # ent_tz = pytz.timezone(vehicle.enterprise.timezone)
         # vehicle.buy_datetime = vehicle.buy_datetime.astimezone(ent_tz)
         # vehicle_values['buy_datetime'] = str(vehicle.buy_datetime)[:19]
         # print(str(vehicle.buy_datetime)[:19])
 
         form = VehicleForm(initial=vehicle_values)
+        print(form)
         if request.user.is_superuser:
             enterprises = Enterprise.objects.all()
         elif Manager.objects.filter(user=request.user):
@@ -187,6 +190,7 @@ def vehicle(request, id):
 def create_vehicle(request):
     if request.method == 'POST':
         vehicle_form = VehicleForm(request.POST)
+        print(vehicle_form)
         if vehicle_form.is_valid():
             vehicle = Vehicle.objects.create(**vehicle_form.cleaned_data)
             vehicle.save()
@@ -270,3 +274,134 @@ class RoutePointsInfoView(APIView):
             serialized_route_points = GeoRoutePointSerializer(instance=route_points, many=True)
 
         return Response(serialized_route_points.data)
+
+
+class TravelInfoView(APIView):
+    # permission_classes = (IsManagerPermission,)
+    parser_classes = (JSONParser,)
+
+    # def get(self, request):
+    #     start_date = datetime.fromisoformat(request.GET['start'])
+    #     end_date = datetime.fromisoformat(request.GET['end'])
+    #     # route_points = RoutePoint.objects.filter(
+    #     #     vehicle__travels__begin__lt=F('datetime'),
+    #     #     vehicle__travels__end__gt=F('datetime')
+    #     # )
+    #     travels = Travel.objects.filter(
+    #         Q(begin__gt=start_date) &
+    #         Q(end__lt=end_date)
+    #     )
+    #
+    #     vehicles_with_dates = travels.values('vehicle_id').annotate(min_dt=Min('begin'), max_dt=Max('end'))
+    #     route_points = RoutePoint.objects.filter(
+    #         vehicle_id__in=vehicles_with_dates.values('vehicle_id'),
+    #         datetime__gt=vehicles_with_dates.values('min_dt'),
+    #         datetime__lt=vehicles_with_dates.values('max_dt')
+    #     )
+    #
+    #     #
+    #     # serialized_travels = TravelSerializer(instance=travels, many=True)
+    #     # return Response(serialized_travels.data)
+    #     #
+    #     # print(route_points)
+    #     serialized_route_points = RoutePointSerializer(instance=route_points, many=True)
+    #     return Response(serialized_route_points.data)
+
+    def get(self, request):
+        start_date = datetime.fromisoformat(request.GET['start'])
+        end_date = datetime.fromisoformat(request.GET['end'])
+        travels = Travel.objects.filter(
+                Q(begin__gt=start_date) &
+                Q(end__lt=end_date)
+            )
+
+        # for travel in travels:
+        vehicles_with_dates = travels.values('vehicle_id').annotate(min_dt=Min('begin'), max_dt=Max('end'))
+
+        route_points = RoutePoint.objects.filter(
+                vehicle_id__in=vehicles_with_dates.values('vehicle_id'),
+                datetime__gt=vehicles_with_dates.values('min_dt'),
+                datetime__lt=vehicles_with_dates.values('max_dt')
+            )
+
+        for route_point in route_points:
+            reversed_route_point = geocoder.geocodefarm(list(reversed(route_point.point.coords)), method='reverse')
+
+        serialized_route_points = RoutePointSerializer(instance=route_points, many=True)
+        return Response(serialized_route_points.data)
+
+
+# class EnterpriseList(DrillDownAPIView):
+#     # model = Enterprise
+#     # drilldowns = ['vehicles__routepoints', ]
+#
+#     def get_base_query(self):
+#         # Base query for your class, typically just '.objects.all()'
+#         return Enterprise.objects.all()
+
+@login_required
+def enterprises(request):
+    if request.user.is_superuser:
+        companies = Enterprise.objects.all()
+    elif Manager.objects.filter(user=request.user):
+        mngr = Manager.objects.get(user=request.user)
+        companies = mngr.enterprise.all()
+    else:
+        raise Http404()
+    form = EnterpriseForm()
+    context = {'companies': companies, 'form': form}
+    # if request.method == 'GET':
+    # initial_values = {}
+    # initial_values['enterprises'] = companies
+    # form = EnterpriseForm(initial=initial_values)
+    # context = {'companies': companies, 'form': form}
+
+    if request.method == 'POST':
+        if request.POST.get('company') :
+            company_id = int(request.POST['company'][1:-1])
+            company = get_object_or_404(Enterprise, pk=company_id)
+            context['company'] = company
+
+            vehicles = Vehicle.objects.filter(enterprise=company)
+            context['vehicles'] = vehicles
+        else:
+            raise Http404()
+
+        if request.POST.get('vehicle'):
+            vehicle_id = int(request.POST['vehicle'][1:-1])
+            if vehicle_id:
+                vehicle = get_object_or_404(Vehicle, pk=vehicle_id)
+                context['vehicle'] = vehicle
+
+                travels = Travel.objects.filter(vehicle=vehicle)
+                context['travels'] = travels
+
+        if request.POST.get('travel'):
+            travel_id = int(request.POST['travel'][1:-1])
+            if travel_id:
+                travel = get_object_or_404(Travel, pk=travel_id)
+                context['travel'] = travel
+
+                route_points = RoutePoint.objects.filter(
+                    vehicle=vehicle,
+                    datetime__gt=travel.begin,
+                    datetime__lt=travel.end
+                )
+
+                reversed_route_points = []
+                for route_point in route_points:
+                    reversed_route_point = geocoder.geocodefarm(list(reversed(route_point.point.coords)),
+                                                                method='reverse')
+                    # print(reversed_route_point.location)
+                    # print(reversed_route_point.country, reversed_route_point.city, reversed_route_point.street, reversed_route_point.housenumber,)
+                    # print(dir(reversed_route_point))
+                    reversed_route_points.append(reversed_route_point)
+
+                context['route_points'] = reversed_route_points
+
+                route_line = []
+                for route_point in route_points:
+                    route_line.append(list(reversed(route_point.point.coords)))
+
+                context['route_line'] = route_line
+    return render(request, 'enterprises.html', context=context)

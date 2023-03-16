@@ -110,6 +110,9 @@ class Vehicle(models.Model):
     def __str__(self):
         return '{0} {1} ({2})'.format(self.manufacturer, self.model, self.year)
 
+    def name(self):
+        return '{0} {1} ({2})'.format(self.manufacturer, self.model, self.year)
+
     def validate_active_driver(self):
         if self.active_driver:
             raise ValidationError('У данного транспортного средства есть активный водитель')
@@ -173,3 +176,14 @@ class Travel(models.Model):
                                 verbose_name='Автомобиль, на котором произошла поездка')
     begin = models.DateTimeField(verbose_name='Начало поездки')
     end = models.DateTimeField(verbose_name='Окончание поездки')
+
+    class Meta:
+        ordering = ['vehicle']
+        verbose_name = 'Поездка'
+        verbose_name_plural = 'Поездки'
+
+    def __str__(self):
+        return '{0} - {1}'.format(self.begin, self.end)
+
+    def name(self):
+        return '{0} - {1}'.format(self.begin.strftime("%Y-%m-%d %H:%M:%S"), self.end.strftime("%Y-%m-%d %H:%M:%S"))

@@ -134,3 +134,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/park/management'
 LOGOUT_REDIRECT_URL = '/'
+
+DATE_FORMAT = 'Y-m-d'
