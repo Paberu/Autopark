@@ -1,0 +1,103 @@
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% load widget_tweaks %}
+
+{% load tz %}
+
+{% if message %}
+  <p>{{ message }} <a class="btn btn-primary" href="/park/management" role="button">Вернуться</a></p>
+{% else %}
+  {# Display a form #}
+  <form action="" method="post" class="form">
+    {% csrf_token %}
+
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+
+    {% for field in form.visible_fields %}
+      <div class="form-group">
+
+      {% if field.name == 'companies' %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <select name=company class="form-control" required id="company_id" onselect="">
+          <option value=“0”>------</option>
+        {% for c in companies %}
+        <option value=“{{ c.pk }}” {% if c.id == company.id %} selected {% endif %}>{{ c.name }}</option>
+        {% endfor %}
+        </select>
+
+      {% elif field.name == 'vehicles' %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <select name="vehicle" class="form-control" onselect="">
+          <option value=“0”>------</option>
+        {% for v in vehicles %}
+        <option value=“{{ v.pk }}” {% if v.id == vehicle.id %} selected {% endif %}>{{ v.name }}</option>
+        {% endfor %}
+        </select>
+
+      {% elif field.name == 'travels' %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <select name="travel" class="form-control" onselect="">
+          <option value=“0”>------</option>
+        {% for t in travels %}
+        <option value=“{{ t.pk }}” {% if t.id == travel.id %} selected {% endif %}>{{ t.name }}</option>
+        {% endfor %}
+        </select>
+      {% endif %}
+
+      {% for error in field.errors %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+      </div>
+    {% endfor %}
+
+    {% bootstrap_button button_type="submit" content="OK" %}
+    {% bootstrap_button button_type="reset" content="Cancel" %}
+
+  </form>
+
+  <div id="map" style="width:1200px; height:600px">
+    <script src="//api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=e85c72cb-b9ca-4887-838f-b0cf38d74df9" type="text/javascript"></script>
+    <script src="https://yandex.st/jquery/2.2.3/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      ymaps.ready(init);
+
+      function init () {
+          var myMap = new ymaps.Map("map", {
+                  center: [57.81662395951577, 28.33584869817963],
+                  zoom: 17
+              }),
+
+              var myPolyline = new ymaps.Polyline({{ route_line }});
+              myMap.geoObjects.add(myPolyline);
+
+          // элемента управления и его параметры.
+          myMap.controls
+              // Кнопка изменения масштаба.
+              .add('zoomControl', { left: 5, top: 5 })
+              // Список типов карты
+              .add('typeSelector')
+              // Кнопка изменения масштаба - компактный вариант.
+              // Расположим её справа.
+              .add('smallZoomControl', { right: 5, top: 75 })
+              // Стандартный набор кнопок
+              .add('mapTools', { left: 35, top: 5 });
+
+          // Показываем хинт на карте (без привязки к геообъекту).
+          myMap.hint.show(myMap.getCenter(), "Содержимое хинта", {
+              // Опция: задержка перед открытием.
+              showTimeout: 1500
+          });
+      }
+	</script>
+  </div>
+{% endif %}
