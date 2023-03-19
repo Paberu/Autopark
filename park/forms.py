@@ -16,3 +16,10 @@ class EnterpriseForm(forms.Form):
     vehicles = forms.ChoiceField()
     travels = forms.ChoiceField()
     # route_points = forms.ChoiceField()
+
+
+class GenerateTrackForm(forms.Form):
+    vehicles = forms.ChoiceField(label='Автомобили')
+    track_length = forms.FloatField(label='Длина пути')
+    max_speed = forms.FloatField(label='Максимальная скорость')
+    max_acceleration = forms.FloatField(label='Максимальное ускорение')

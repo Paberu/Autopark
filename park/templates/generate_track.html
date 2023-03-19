@@ -1,0 +1,77 @@
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% load widget_tweaks %}
+
+{% load tz %}
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=e85c72cb-b9ca-4887-838f-b0cf38d74df9" type="text/javascript"></script>
+<script type="text/javascript">
+    ymaps.ready(init);
+
+    function init() {
+        var myMap = new ymaps.Map("map", {
+                center: [28.201305, 57.838777],
+                zoom: 11
+            }, {
+                searchControlProvider: 'yandex#search'
+            });
+
+        {% for route_point in route_line %}
+          var myPoint = new ymaps.Placemark({{ route_point }}, {}, {
+              preset: "islands#circleDotIcon",
+              iconColor: '#ff0000'});
+          myMap.geoObjects.add(myPoint);
+        {% endfor %}
+    }
+
+</script>
+
+{% if message %}
+  <p>{{ message }} <a class="btn btn-primary" href="/park/management" role="button">Вернуться</a></p>
+{% else %}
+  {# Display a form #}
+  <form action="" method="post" class="form">
+    {% csrf_token %}
+
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+
+    {% for field in form.visible_fields %}
+      <div class="form-group">
+
+      {% if field.name == 'vehicles' %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <select name="vehicle" class="form-control" onselect="">
+          <option value=“0”>------</option>
+        {% for v in vehicles %}
+        <option value=“{{ v.pk }}”>{{ v.name }}</option>
+        {% endfor %}
+        </select>
+
+      {% else %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field|add_class:'form-control' }}
+      {% endif %}
+
+      {% for error in field.errors %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+      </div>
+    {% endfor %}
+
+    {% bootstrap_button button_type="submit" content="OK" %}
+    {% bootstrap_button button_type="reset" content="Cancel" %}
+
+  </form>
+
+  <div id="map" style="width:1200px; height:600px"></div>
+
+{% endif %}

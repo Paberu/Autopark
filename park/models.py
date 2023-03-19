@@ -165,7 +165,7 @@ class RoutePoint(geo_models.Model):
         verbose_name_plural = 'Точки маршрута'
 
     def __str__(self):
-        return str(self.vehicle_id) + '' + str(self.point)
+        return str(self.vehicle_id) + '' + str(self.point) + '' + str(self.datetime)
 
     def display_vehicle(self):
         return self.vehicle.name

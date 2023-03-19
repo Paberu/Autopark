@@ -16,4 +16,5 @@ urlpatterns = [
     re_path(r'delete_vehicle/(?P<id>\d+)$', views.delete_vehicle, name='delete_vehicle'),
     path('enterprises', views.enterprises, name='enterprises'),
     path('create_vehicle', views.create_vehicle, name='create_vehicle'),
+    path('generate_track', views.generate_track, name='generate_track'),
 ]
