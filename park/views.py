@@ -1,6 +1,10 @@
+import json
+
 import pytz
 import geocoder
+from pprint import pprint, pp
 from datetime import datetime
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.serializers import serialize
@@ -14,11 +18,13 @@ from rest_framework.parsers import JSONParser
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.serializers import Serializer
 # from rest_framework_drilldown import DrillDownAPIView
 
 from autopark import settings
 from .forms import VehicleForm, EnterpriseForm, GenerateTrackForm
 from .models import Vehicle, Manager, Enterprise, Driver, RoutePoint, Travel
+from .reports import TrackReport
 from .permissions import IsManagerPermission
 from .serializers import VehicleSerializer, RoutePointSerializer, GeoRoutePointSerializer, TravelSerializer
 
@@ -100,9 +106,9 @@ class VehicleInfoView(APIView):
 
 @login_required
 def management(request):
-    # result = set_timezone(request)
-    # if result:
-    #     return result
+    result = set_timezone(request)
+    if result:
+        return result
     request.session['django_timezone'] = request.COOKIES['django_timezone']
 
     if request.user.is_superuser:
@@ -395,6 +401,7 @@ def enterprises(request):
                 context['route_line'] = route_line
     return render(request, 'enterprises.html', context=context)
 
+
 @login_required
 def generate_track(request):
     if request.user.is_superuser:
@@ -418,3 +425,61 @@ def generate_track(request):
         pass
 
     return render(request, 'generate_track.html', context=context)
+
+
+@login_required
+def generate_report(request):
+    daily_report = TrackReport(1, '2023-01-01', '2023-03-21')
+    daily_report.generate_full_report()
+    return render(request, 'generate_track.html')
+
+
+def report(request, report_type, enterprise_id):
+    enterprise = Enterprise.objects.get(pk=enterprise_id)
+    vehicles = Vehicle.objects.filter(enterprise=enterprise)
+    rep = TrackReport(report_type=report_type, begin_report_dt='2023-01-01', finish_report_dt='2023-03-21')
+    report_data = {}
+    for vehicle in vehicles:
+        data = rep.generate_report(vehicle.id)
+        if data:
+            report_data[str(vehicle)] = data
+    pprint(report_data)
+    context = {'report_data': report_data}
+    return render(request, 'report.html', context=context)
+
+
+class ReportInfoView(APIView):
+    permission_classes = (IsManagerPermission,)
+    parser_classes = (JSONParser, )
+
+    def check_permissions(self, request):
+        for permission in self.get_permissions():
+            if not permission.has_permission(request, self):
+                self.permission_denied(request, message='Error code: 401', code=401)
+
+    def check_object_permissions(self, request, obj):
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(request, self, obj):
+                self.permission_denied(request, message='Error code: 403', code=403)
+
+    def get(self, request):
+        vehicle_id = int(request.GET.get('id'))
+        report_type = int(request.GET.get('type'))
+        begin = datetime.fromisoformat(request.GET.get('begin'))
+        end = datetime.fromisoformat(request.GET.get('end'))
+        vehicle = Vehicle.objects.get(pk=vehicle_id)
+        if request.user.is_superuser:
+            pass
+        elif Manager.objects.filter(user=request.user):
+            mngr = Manager.objects.filter(user=request.user)[0]
+            enterprises = mngr.enterprise.all()
+            if vehicle.enterprise not in enterprises:
+                print('Error in server logic, should have failed on "check_permissions" stage.')
+                self.permission_denied(request, message='Error code: 401', code=401)
+        else:
+            print('Error in server logic, should have failed on "check_permissions" stage.')
+            self.permission_denied(request, message='Error code: 401', code=401)
+
+        track_report = TrackReport(report_type=report_type, begin_report_dt=begin, finish_report_dt=end)
+        data = track_report.generate_report(vehicle_id)
+        return Response(json.dumps(data))

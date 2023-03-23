@@ -187,3 +187,15 @@ class Travel(models.Model):
 
     def name(self):
         return '{0} - {1}'.format(self.begin.strftime("%Y-%m-%d %H:%M:%S"), self.end.strftime("%Y-%m-%d %H:%M:%S"))
+
+# class Report(models.model):
+#
+#     TYPES = (
+#         ('DLY', 'Ежедневный отчет'),
+#         ('WKL', 'Еженедельный отчет'),
+#         ('MNT', 'Ежемесячный отчет'),
+#         ('YEA', 'Годовой отчет')
+#     )
+#
+#     report_type = models.CharField(choices=TYPES, max_length=3, default='DLY', verbose_name='Тип отчета')
+#

@@ -6,7 +6,7 @@ from park.models import Manager, Driver, Vehicle
 class IsManagerPermission(BasePermission):
 
     def has_permission(self, request, view):
-        return len(Manager.objects.filter(user=request.user)) > 0
+        return len(Manager.objects.filter(user=request.user)) > 0 or request.user.is_superuser
 
     def has_object_permission(self, request, view, obj):
         manager = Manager.objects.filter(user=request.user)[0]

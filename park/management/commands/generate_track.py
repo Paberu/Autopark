@@ -27,7 +27,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         vehicle_id = options['vehicle_id'][0]
         coord_from = [28.33485326156282, 57.81664162349827]
-        coord_to = [28.92072549439952, 57.02270904191284]
+        coord_to = [60.902996, 58.232520]
         length = options['length']
         speed = options['speed']
         acceleration = options['acceleration']
