@@ -7,9 +7,9 @@
         {% for car, dates in report_data.items %}
             <p>{{ car }}:</p>
             <table>
-                <tr><td>День состоявшейся поездки</td><td>Общий путь, км</td></tr>
-                {% for date, km in dates.items %}
-                    <tr><td>{{ date }}</td><td>{{ km }}</td></tr>
+                <tr><td>Начало отчетного периода</td><td>Конец отчетного периода</td><td>Общий путь, км</td></tr>
+                {% for date1, date2, km in dates %}
+                    <tr><td>{{ date1 }}</td><td>{{ date2 }}</td><td>{{ km }}</td></tr>
                 {% endfor %}
             </table>
             <p></p>

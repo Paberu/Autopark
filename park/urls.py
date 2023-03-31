@@ -11,11 +11,10 @@ urlpatterns = [
     path('api/get_report/', views.ReportInfoView.as_view()),
     path('api/get_token', obtain_auth_token),
     path('management', views.management, name='management'),
-    # path('enterprise', views.enterprise, name='enterprise'),
     re_path(r'enterprise/(?P<id>\d+)$', views.enterprise, name='enterprise'),
     re_path(r'vehicle/(?P<id>\d+)$', views.vehicle, name='vehicle'),
     re_path(r'delete_vehicle/(?P<id>\d+)$', views.delete_vehicle, name='delete_vehicle'),
     path('enterprises', views.enterprises, name='enterprises'),
     path('create_vehicle', views.create_vehicle, name='create_vehicle'),
-    path('report/<int:report_type>/<int:enterprise_id>', views.report, name='report'),
+    path('report', views.report, name='report'),
 ]

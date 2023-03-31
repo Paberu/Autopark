@@ -1,22 +1,51 @@
-{% extends 'base.html' %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
 
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% load widget_tweaks %}
 {% block title %}Предприятия{% endblock %}
 
-{% block content %}
-    <table>
-        {% for enterprise in enterprises %}
-            <tr>
-                <td width="50%">
-                    <p><a href="{{ enterprise.get_absolute_url }}">{{ enterprise }}</a></p>
-                </td>
-                <td width="25%">
-                    <p><a href="./report/1/{{ enterprise.id }}"> Отчёт о пробеге по дням</a></p>
-                </td>
-                <td width="25%">
-                    <p><a href="./report/2/{{ enterprise.id }}"> Отчёт о пробеге по неделям</a></p>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
 
-{% endblock %}
+{% for enterprise in enterprises %}
+<p><a href="{{ enterprise.get_absolute_url }}">{{ enterprise }}</a></p>
+{% endfor %}
+
+{% if report_form %}
+    {# Display a report_form #}
+    <form action="{% url 'report' %}" method="post" class="form">
+    {% csrf_token %}
+
+    {% for hidden in report_form.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+
+    {% for field in report_form.visible_fields %}
+        <div class="form-group">
+            {% if field.name == 'enterprises' %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <select name=enterprise class="form-control" required id="enterprise_id" onselect="">
+                {% for enterprise in enterprises %}
+                <option value="{{ enterprise.pk }}">{{ enterprise.name }}</option>
+                {% endfor %}
+                </select>
+            {% else %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field|add_class:'form-control' }}
+            {% endif %}
+
+            {% for error in field.errors %}
+                <span class="help-block">{{ error }}</span>
+            {% endfor %}
+         </div>
+    {% endfor %}
+
+    {% bootstrap_button button_type="submit" content="OK" %}
+    {% bootstrap_button button_type="reset" content="Cancel" %}
+    </form>
+{% endif %}

@@ -23,3 +23,22 @@ class GenerateTrackForm(forms.Form):
     track_length = forms.FloatField(label='Длина пути')
     max_speed = forms.FloatField(label='Максимальная скорость')
     max_acceleration = forms.FloatField(label='Максимальное ускорение')
+
+
+class ReportForm(forms.Form):
+
+    enterprises = forms.ChoiceField(label='Компания')
+    REPORT_TYPES = (
+        (0, 'Ежедневный'),
+        (1, 'Ежемесячный'),
+        (2, 'Годовой'),
+    )
+    report_type = forms.TypedChoiceField(label='Тип отчёта', choices=REPORT_TYPES, coerce=int)
+    begining = forms.DateField(label='Дата начала отчёта',
+                               widget=forms.DateInput(format='%Y-%m-%d',
+                                                      attrs={'class': 'form-control','placeholder': 'Select a date',
+                                                             'type': 'date'}))
+    ending = forms.DateField(label='Дата окончания отчёта',
+                             widget=forms.DateInput(format='%Y-%m-%d',
+                                                    attrs={'class': 'form-control', 'placeholder': 'Select a date',
+                                                           'type': 'date'}))
